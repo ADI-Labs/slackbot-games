@@ -4,7 +4,9 @@ import json # json for parse the rtm_read() data
 import sys
 
 # Slack API token
-token = "xoxp-22279063781-22282485879-23302734596-cb3da71b11"
+with open('token.json') as api_key:
+    api_key = json.load( api_key )
+    token = api_key["token"]
 
 sc = SlackClient(token) # create an instance of a slack client
 
@@ -19,12 +21,13 @@ sc.api_call(
     "chat.postMessage", channel="#general", text="Send a message and I'll read it!",
     username='gamebot', icon_emoji=':robot_face:'
 )
+
 # On connect - read from messaging feed every second
 if sc.rtm_connect():
     while True:
         data = json.dumps(sc.rtm_read()) # turn data into JSON obj.
-        print data
+        print (data)
         sys.stdout.flush()
         time.sleep(1)
 else:
-    print "Connection Failed, invalid token?"
+    print ("Connection Failed, invalid token?")
