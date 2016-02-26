@@ -11,10 +11,10 @@ Clone the repo.
 
 	git clone https://github.com/ADI-Labs/slackbot-games
 
-Go into repo and paste in api token 
+Create a file `token.json` and add `{"token":"YOUR_TOKEN"}`
 
 	cd slackbot-games
-	vim token.json
+	touch token.json creates token.json
 
 
 Run the bot in your terminal with:
