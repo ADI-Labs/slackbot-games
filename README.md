@@ -1,4 +1,39 @@
-SlackBot
+:game_die: SlackBot :game_die:
+====================
+
+## Usage
+### Install 
+Install the slack client. 
+
+	sudo pip install slackclient
+
+Clone the repo.
+
+	git clone https://github.com/ADI-Labs/slackbot-games
+
+Create a file `token.json` and add `{"token":"YOUR_TOKEN"}`
+
+	cd slackbot-games
+	touch token.json creates token.json
+
+
+Run the bot in your terminal with:
+	
+	python bot.py
+	
+Check slack for the bot.
+
+Sucess!
+	
+
+### TO-DOS
+
+
+
+	
+
+
+## SPEC
 
 Game Ideas:
 
