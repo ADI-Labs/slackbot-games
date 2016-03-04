@@ -2,6 +2,10 @@ from slackclient import SlackClient
 import time # time for sleep between polls
 import json # json for parse the rtm_read() data
 import sys
+import time 
+
+listOfMoves = []
+listOfMoves.append(" ")
 
 # Slack API token
 with open('token.json') as api_key:
@@ -12,15 +16,15 @@ sc = SlackClient(token) # create an instance of a slack client
 
 # send a test messgae
 sc.api_call("api.test")
-sc.api_call("channels.info", channel="1234567890")
-sc.api_call(
-    "chat.postMessage", channel="#general", text="Hello from Python! :tada:",
-    username='gamebot', icon_emoji=':robot_face:'
-)
-sc.api_call(
-    "chat.postMessage", channel="#general", text="Send a message and I'll read it!",
-    username='gamebot', icon_emoji=':robot_face:'
-)
+#sc.api_call("channels.info", channel="1234567890")
+#sc.api_call(
+#    "chat.postMessage", channel="#general", text="Hello from Python! :tada:",
+#    username='gamebot', icon_emoji=':robot_face:'
+#)
+#sc.api_call(
+#    "chat.postMessage", channel="#general", text="Send a message and I'll read it!",
+#    username='gamebot', icon_emoji=':robot_face:'
+#)
 
 # draw new board and send
 def drawBoard(board):
@@ -213,29 +217,39 @@ def isOnCorner(x, y):
     # Returns True if the position is in one of the four corners.
     return (x == 0 and y == 0) or (x == 7 and y == 0) or (x == 0 and y == 7) or (x == 7 and y == 7)
 
-
 def getPlayerMove(board, playerTile):
-    # Let the player type in their move.
+
+    print('Enter your move, or type quit to end the game, or hints to turn off/on hints.')
     # Returns the move as [x, y] (or returns the strings 'hints' or 'quit')
     DIGITS1TO8 = '1 2 3 4 5 6 7 8'.split()
     while True:
-        print('Enter your move, or type quit to end the game, or hints to turn off/on hints.')
-        move = input().lower()
-        if move == 'quit':
-            return 'quit'
-        if move == 'hints':
-            return 'hints'
 
-        if len(move) == 2 and move[0] in DIGITS1TO8 and move[1] in DIGITS1TO8:
-            x = int(move[0]) - 1
-            y = int(move[1]) - 1
-            if isValidMove(board, playerTile, x, y) == False:
-                continue
+        # Get the player move from slack.
+        data = json.loads( sc.api_call("channels.history", channel="C0N84ELPN", count=1) )
+
+        move = data["messages"][0]["text"]
+
+        if move not in listOfMoves:
+            listOfMoves.append( move )
+            print ( move )
+            print ( listOfMoves )
+
+            if move == 'quit':
+                return 'quit'
+            if move == 'hints':
+                return 'hints'
+
+            if len(move) == 2 and move[0] in DIGITS1TO8 and move[1] in DIGITS1TO8:
+                x = int(move[0]) - 1
+                y = int(move[1]) - 1
+                if isValidMove(board, playerTile, x, y) == False:
+                    continue
+                else:
+                    break
             else:
-                break
-        else:
-            print('That is not a valid move. Type the x digit (1-8), then the y digit (1-8).')
-            print('For example, 81 will be the top-right corner.')
+                print('That is not a valid move. Type the x digit (1-8), then the y digit (1-8).')
+                print('For example, 81 will be the top-right corner.')
+
 
     return [x, y]
 
@@ -273,76 +287,75 @@ def showPoints(playerTile, computerTile):
 # PLAY GAME
 def playReversi():
     while True:
-    outputString = ""
-    # Reset the board and game.
-    mainBoard = getNewBoard()
-    resetBoard(mainBoard)
-    playerTile, computerTile = enterPlayerTile()
-    showHints = False
-    turn = whoGoesFirst()
-    print('The ' + turn + ' will go first.')
+        outputString = ""
+        # Reset the board and game.
+        mainBoard = getNewBoard()
+        resetBoard(mainBoard)
+        playerTile, computerTile = enterPlayerTile()
+        showHints = False
+        turn = whoGoesFirst()
+        print('The ' + turn + ' will go first.')
 
-    while True:
-        if turn == 'player':
-            # Player's turn.
-            if showHints:
-                validMovesBoard = getBoardWithValidMoves(mainBoard, playerTile)
-                drawBoard(validMovesBoard)
+        while True:
+            if turn == 'player':
+                # Player's turn.
+                if showHints:
+                    validMovesBoard = getBoardWithValidMoves(mainBoard, playerTile)
+                    drawBoard(validMovesBoard)
+                else:
+                    drawBoard(mainBoard)
+                showPoints(playerTile, computerTile)
+                move = getPlayerMove(mainBoard, playerTile)
+                if move == 'quit':
+                    print('Thanks for playing!')
+                    sys.exit() # terminate the program
+                elif move == 'hints':
+                    showHints = not showHints
+                    continue
+                else:
+                    makeMove(mainBoard, playerTile, move[0], move[1])
+
+                if getValidMoves(mainBoard, computerTile) == []:
+                    break
+                else:
+                    turn = 'computer'
+
             else:
+                # Computer's turn.
                 drawBoard(mainBoard)
-            showPoints(playerTile, computerTile)
-            move = getPlayerMove(mainBoard, playerTile)
-            if move == 'quit':
-                print('Thanks for playing!')
-                sys.exit() # terminate the program
-            elif move == 'hints':
-                showHints = not showHints
-                continue
-            else:
-                makeMove(mainBoard, playerTile, move[0], move[1])
+                showPoints(playerTile, computerTile)
+                input('Press Enter to see the computer\'s move.')
+                x, y = getComputerMove(mainBoard, computerTile)
+                makeMove(mainBoard, computerTile, x, y)
 
-            if getValidMoves(mainBoard, computerTile) == []:
-                break
-            else:
-                turn = 'computer'
+                if getValidMoves(mainBoard, playerTile) == []:
+                    break
+                else:
+                    turn = 'player'
 
+        # Display the final score.
+        drawBoard(mainBoard)
+        scores = getScoreOfBoard(mainBoard)
+        print('X scored %s points. O scored %s points.' % (scores['X'], scores['O']))
+        if scores[playerTile] > scores[computerTile]:
+            print('You beat the computer by %s points! Congratulations!' % (scores[playerTile] - scores[computerTile]))
+        elif scores[playerTile] < scores[computerTile]:
+            print('You lost. The computer beat you by %s points.' % (scores[computerTile] - scores[playerTile]))
         else:
-            # Computer's turn.
-            drawBoard(mainBoard)
-            showPoints(playerTile, computerTile)
-            input('Press Enter to see the computer\'s move.')
-            x, y = getComputerMove(mainBoard, computerTile)
-            makeMove(mainBoard, computerTile, x, y)
+            print('The game was a tie!')
 
-            if getValidMoves(mainBoard, playerTile) == []:
-                break
-            else:
-                turn = 'player'
-
-    # Display the final score.
-    drawBoard(mainBoard)
-    scores = getScoreOfBoard(mainBoard)
-    print('X scored %s points. O scored %s points.' % (scores['X'], scores['O']))
-    if scores[playerTile] > scores[computerTile]:
-        print('You beat the computer by %s points! Congratulations!' % (scores[playerTile] - scores[computerTile]))
-    elif scores[playerTile] < scores[computerTile]:
-        print('You lost. The computer beat you by %s points.' % (scores[computerTile] - scores[playerTile]))
-    else:
-        print('The game was a tie!')
-
-    if not playAgain():
-        break
+        if not playAgain():
+            break
 
 
 ## Send to SLACK
 mainBoard = getNewBoard()
-drawnBoard = drawBoard(mainBoard)
-sc.api_call(
-    "chat.postMessage", channel="#general", text = drawnBoard,
-    username='gamebot', icon_emoji=':robot_face:'
-)
-
-playReversi()
+getPlayerMove( mainBoard, 'X')
+#drawnBoard = drawBoard(mainBoard)
+#sc.api_call(
+#    "chat.postMessage", channel="#general", text = drawnBoard,
+#    username='gamebot', icon_emoji=':robot_face:'
+#)
 
 #On connect - read from messaging feed every second
 if sc.rtm_connect():
