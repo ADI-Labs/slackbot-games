@@ -1,8 +1,7 @@
 from slackclient import SlackClient
-import time # time for sleep between polls
-import json # json for parse the rtm_read() data
+import time  # time for sleep between polls
+import json  # json for parse the rtm_read() data
 import sys
-import time 
 
 listOfMoves = []
 listOfMoves.append(" ")
@@ -12,52 +11,38 @@ with open('token.json') as api_key:
     api_key = json.load( api_key )
     token = api_key["token"]
 
-sc = SlackClient(token) # create an instance of a slack client
+sc = SlackClient(token)  # create an instance of a slack client
 
 # send a test messgae
 sc.api_call("api.test")
-#sc.api_call("channels.info", channel="1234567890")
-#sc.api_call(
-#    "chat.postMessage", channel="#general", text="Hello from Python! :tada:",
-#    username='gamebot', icon_emoji=':robot_face:'
-#)
-#sc.api_call(
-#    "chat.postMessage", channel="#general", text="Send a message and I'll read it!",
-#    username='gamebot', icon_emoji=':robot_face:'
-#)
+sc.api_call("channels.info", channel="1234567890")
+
 
 # draw new board and send
 def drawBoard(board):
     boardString = "GAMEBOARD\n"
     # This function prints out the board that it was passed. Returns None.
-    HLINE = '    +---+---+---+---+---+---+---+---+\n'
-    VLINE = '    |       |       |       |       |       |       |       |       |\n'
+    #HLINE = '    +----+----+----+----+----+----+----+----+\n'
+    HLINE = '    ----------------------------------------------------\n'
+    VLINE = '    |       |       |       |       |       |       |       |     \
+      |\n'
 
-    boardString += ('        1      2      3     4     5     6      7     8\n')
+    boardString += ('          1        2         3         4         5         6        7         8\n')
     boardString += HLINE
-    #print('    1   2   3   4   5   6   7   8\n')
-    #print(HLINE)
     for y in range(8):
-        #boardString += VLINE
-        boardString += str (y+1)
-        #print(VLINE)
-        #print(y+1, end=' ')
+        boardString += str(y+1)
         for x in range(8):
-            boardString += '|      ' + str(board[x][y])
-            #print('| %s' % (board[x][y]), end=' ')
+            boardString += '|   ' + str(board[x][y]) + '   '
         boardString += '|\n' + HLINE
 
     return boardString
-        #print('|')
-        #print(VLINE)
-        #print(HLINE)
 
 
 def resetBoard(board):
     # Blanks out the board it is passed, except for the original starting position.
     for x in range(8):
         for y in range(8):
-            board[x][y] = ' '
+            board[x][y] = '    '
 
     # Starting pieces:
     board[3][3] = 'X'
@@ -347,22 +332,46 @@ def playReversi():
         if not playAgain():
             break
 
+def print_menu():
+    '''print menu to channel'''
 
-## Send to SLACK
-mainBoard = getNewBoard()
-getPlayerMove( mainBoard, 'X')
-#drawnBoard = drawBoard(mainBoard)
-#sc.api_call(
-#    "chat.postMessage", channel="#general", text = drawnBoard,
-#    username='gamebot', icon_emoji=':robot_face:'
-#)
+    menu = "Hi and welcome to Slackbot Games! \n"
+    menu += "Pick the game you want to play: \n"
+    menu += "1. Reversi \n"
 
-#On connect - read from messaging feed every second
-if sc.rtm_connect():
-    while True:
-        data = json.dumps(sc.rtm_read()) # turn data into JSON obj.
-        print (data)
-        sys.stdout.flush()
-        time.sleep(1)
-else:
-    print ("Connection Failed, invalid token?")
+    sc.api_call(
+        "chat.postMessage", channel="#general", text = menu,
+        username='gamebot', icon_emoji=':robot_face:'
+    )
+
+
+def get_name():
+    '''get the user's choice of game'''
+
+def main():
+    # print the menu
+    print_menu()
+
+    ## Start game
+    mainBoard = getNewBoard()
+    resetBoard( mainBoard )
+
+    #getPlayerMove( mainBoard, 'X')
+    drawnBoard = drawBoard(mainBoard)
+
+    sc.api_call(
+        "chat.postMessage", channel="#general", text = drawnBoard,
+        username='gamebot', icon_emoji=':robot_face:'
+    )
+
+    #On connect - read from messaging feed every second
+    if sc.rtm_connect():
+        while True:
+            data = json.dumps(sc.rtm_read()) # turn data into JSON obj.
+            print (data)
+            sys.stdout.flush()
+            time.sleep(1)
+    else:
+        print ("Connection Failed, invalid token?")
+
+main()
