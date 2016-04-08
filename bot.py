@@ -68,7 +68,8 @@ def getNewBoard():
 def isValidMove(board, tile, xstart, ystart):
     # Returns False if the player's move on space xstart, ystart is invalid.
     # If it is a valid move, returns a list of spaces that would become the player's if they made a move here.
-    if board[xstart][ystart] != ' ' or not isOnBoard(xstart, ystart):
+    if board[xstart][ystart] != '    ' or not isOnBoard(xstart, ystart):
+        print("not empty or not on board")
         return False
 
     board[xstart][ystart] = tile  # temporarily set the tile on the board.
@@ -152,7 +153,7 @@ def getScoreOfBoard(board):
 def enterPlayerTile():
     # Lets the player type which tile they want to be.
     sc.api_call(
-        "chat.postMessage", channel="#general", text='You are player X',
+        "chat.postMessage", channel="#general", text='You are player X.',
         username='gamebot', icon_emoji=':robot_face:'
     )
     return ['X', 'O']
@@ -182,14 +183,18 @@ def playAgain():
 def makeMove(board, tile, xstart, ystart):
     # Place the tile on the board at xstart, ystart, and flip any of the opponent's pieces.
     # Returns False if this is an invalid move, True if it is valid.
+    print("Makemove")
     tilesToFlip = isValidMove(board, tile, xstart, ystart)
+    print("afterFlip")
 
     if tilesToFlip is False:
+        print("FALSE")
         return False
 
     board[xstart][ystart] = tile
     for x, y in tilesToFlip:
         board[x][y] = tile
+        print("Repeatedtile" + x + y)
     return True
 
 
@@ -235,7 +240,9 @@ def getPlayerMove(board, playerTile):
             if len(move) == 2 and move[0] in DIGITS1TO8 and move[1] in DIGITS1TO8:
                 x = int(move[0]) - 1
                 y = int(move[1]) - 1
+                print('calling from here')
                 if isValidMove(board, playerTile, x, y) == False:
+                    print("MOVE IS FALSE")
                     continue
                 else:
                     break
@@ -269,7 +276,7 @@ def getComputerMove(board, computerTile):
 
     # Go through all the possible moves and remember the best scoring move
     bestScore = -1
-
+    bestMove = [-1,-1]
     for x, y in possibleMoves:
         dupeBoard = getBoardCopy(board)
         makeMove(dupeBoard, computerTile, x, y)
@@ -284,7 +291,7 @@ def getComputerMove(board, computerTile):
 def showPoints(playerTile, computerTile, mainBoard):
     # Prints out the current score.
     scores = getScoreOfBoard(mainBoard)
-    output = 'You have ' + str(scores[playerTile]) + 'points. The computer has ' + str(scores[computerTile]) + 'points.'
+    output = 'You have ' + str(scores[playerTile]) + ' points. The computer has ' + str(scores[computerTile]) + ' points.'
 
     sc.api_call(
         "chat.postMessage", channel="#general", text=output,
@@ -313,6 +320,7 @@ def playReversi():
         while True:
             if turn == 'player':
                 # Player's turn.
+
                 if showHints:
                     validMovesBoard = getBoardWithValidMoves(mainBoard, playerTile)
                     drawBoard(validMovesBoard)
@@ -330,6 +338,7 @@ def playReversi():
                     showHints = not showHints
                     continue
                 else:
+                    print("ENTERED ELSE LOOP FOR MAKEMOVE")
                     makeMove(mainBoard, playerTile, move[0], move[1])
 
                 if getValidMoves(mainBoard, computerTile) == []:
