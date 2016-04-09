@@ -60,7 +60,7 @@ def getNewBoard():
     # Creates a brand new, blank board data structure.
     board = []
     for i in range(8):
-        board.append([' '] * 8)
+        board.append(['    '] * 8)
 
     return board
 
@@ -68,7 +68,10 @@ def getNewBoard():
 def isValidMove(board, tile, xstart, ystart):
     # Returns False if the player's move on space xstart, ystart is invalid.
     # If it is a valid move, returns a list of spaces that would become the player's if they made a move here.
-    if board[xstart][ystart] != '    ' or not isOnBoard(xstart, ystart):
+    if board[xstart][ystart] != '    ':
+        print('not empty')
+        return False
+    elif not isOnBoard(xstart, ystart):
         print("not empty or not on board")
         return False
 
@@ -106,7 +109,7 @@ def isValidMove(board, tile, xstart, ystart):
                         break
                     tilesToFlip.append([x, y])
 
-    board[xstart][ystart] = ' '  # restore the empty space
+    board[xstart][ystart] = '    '  # restore the empty space
     if len(tilesToFlip) == 0:  # If no tiles were flipped, this is not a valid move.
         return False
     return tilesToFlip
@@ -194,7 +197,7 @@ def makeMove(board, tile, xstart, ystart):
     board[xstart][ystart] = tile
     for x, y in tilesToFlip:
         board[x][y] = tile
-        print("Repeatedtile" + x + y)
+        print("Repeatedtile" + str(x) + str(y))
     return True
 
 
@@ -220,8 +223,10 @@ def getPlayerMove(board, playerTile):
         "chat.postMessage", channel="#general", text='Enter your move, or type quit to end the game, or hints to turn off/on hints.',
         username='gamebot', icon_emoji=':robot_face:'
     )
+
     # Returns the move as [x, y] (or returns the strings 'hints' or 'quit')
     DIGITS1TO8 = '1 2 3 4 5 6 7 8'.split()
+    
     while True:
 
         # Get the player move from slack.
@@ -240,7 +245,6 @@ def getPlayerMove(board, playerTile):
             if len(move) == 2 and move[0] in DIGITS1TO8 and move[1] in DIGITS1TO8:
                 x = int(move[0]) - 1
                 y = int(move[1]) - 1
-                print('calling from here')
                 if isValidMove(board, playerTile, x, y) == False:
                     print("MOVE IS FALSE")
                     continue
@@ -302,7 +306,7 @@ def showPoints(playerTile, computerTile, mainBoard):
 # PLAY GAME
 def playReversi():
     while True:
-        outputString = ""
+        #outputString = ""
 
         # Reset the board and game.
         mainBoard = getNewBoard()
@@ -310,8 +314,8 @@ def playReversi():
         playerTile, computerTile = enterPlayerTile()
         showHints = False
         turn = whoGoesFirst()
-        output = 'The ' + turn + ' will go first.'
 
+        output = 'The ' + turn + ' will go first.'
         sc.api_call(
             "chat.postMessage", channel="#general", text=output,
             username='gamebot', icon_emoji=':robot_face:'
@@ -323,9 +327,12 @@ def playReversi():
 
                 if showHints:
                     validMovesBoard = getBoardWithValidMoves(mainBoard, playerTile)
+                    print('hints')
                     drawBoard(validMovesBoard)
                 else:
+                    print('no hints')
                     drawBoard(mainBoard)
+
                 showPoints(playerTile, computerTile, mainBoard)
                 move = getPlayerMove(mainBoard, playerTile)
                 if move == 'quit':
@@ -342,6 +349,7 @@ def playReversi():
                     makeMove(mainBoard, playerTile, move[0], move[1])
 
                 if getValidMoves(mainBoard, computerTile) == []:
+                    print('player break')
                     break
                 else:
                     turn = 'computer'
@@ -350,18 +358,19 @@ def playReversi():
                 # Computer's turn.
                 drawBoard(mainBoard)
                 showPoints(playerTile, computerTile, mainBoard)
-                sc.api_call(
-                    "chat.postMessage", channel="#general", text = output,
-                    username='gamebot', icon_emoji=':robot_face:'
-                )
-                sc.api_call(
-                    "typing", channel="general", username = 'gamebot'
-                )
+                # sc.api_call(
+                #     "chat.postMessage", channel="#general", text = output,
+                #     username='gamebot', icon_emoji=':robot_face:'
+                # )
+                # sc.api_call(
+                #     "typing", channel="general", username = 'gamebot'
+                # )
                 #input('Press Enter to see the computer\'s move.')
                 x, y = getComputerMove(mainBoard, computerTile)
                 makeMove(mainBoard, computerTile, x, y)
 
                 if getValidMoves(mainBoard, playerTile) == []:
+                    print('computer break')
                     break
                 else:
                     turn = 'player'
