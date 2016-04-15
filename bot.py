@@ -4,6 +4,7 @@ import json  # json for parse the rtm_read() data
 import sys
 import random
 
+# create listOfMoves to prevent duplicate moves
 listOfMoves = []
 listOfMoves.append("")
 listOfMoves.append(" ")
@@ -13,7 +14,8 @@ with open('token.json') as api_key:
     api_key = json.load(api_key)
     token = api_key["token"]
 
-sc = SlackClient(token)  # create an instance of a slack client
+# create an instance of a slack client
+sc = SlackClient(token)  
 
 # send a test messgae
 sc.api_call("api.test")
@@ -69,10 +71,8 @@ def isValidMove(board, tile, xstart, ystart):
     # Returns False if the player's move on space xstart, ystart is invalid.
     # If it is a valid move, returns a list of spaces that would become the player's if they made a move here.
     if board[xstart][ystart] != '    ':
-        print('not empty')
         return False
     elif not isOnBoard(xstart, ystart):
-        print("not empty or not on board")
         return False
 
     board[xstart][ystart] = tile  # temporarily set the tile on the board.
@@ -153,15 +153,6 @@ def getScoreOfBoard(board):
     return {'X':xscore, 'O':oscore}
 
 
-def enterPlayerTile():
-    # Lets the player type which tile they want to be.
-    sc.api_call(
-        "chat.postMessage", channel="#general", text='You are player X.',
-        username='gamebot', icon_emoji=':robot_face:'
-    )
-    return ['X', 'O']
-
-
 def whoGoesFirst():
     # Randomly choose the player who goes first.
     if random.randint(0, 1) == 0:
@@ -186,18 +177,15 @@ def playAgain():
 def makeMove(board, tile, xstart, ystart):
     # Place the tile on the board at xstart, ystart, and flip any of the opponent's pieces.
     # Returns False if this is an invalid move, True if it is valid.
-    print("Makemove")
+
     tilesToFlip = isValidMove(board, tile, xstart, ystart)
-    print("afterFlip")
 
     if tilesToFlip is False:
-        print("FALSE")
         return False
 
     board[xstart][ystart] = tile
     for x, y in tilesToFlip:
         board[x][y] = tile
-        print("Repeatedtile" + str(x) + str(y))
     return True
 
 
@@ -246,7 +234,6 @@ def getPlayerMove(board, playerTile):
                 x = int(move[0]) - 1
                 y = int(move[1]) - 1
                 if isValidMove(board, playerTile, x, y) == False:
-                    print("MOVE IS FALSE")
                     continue
                 else:
                     break
@@ -310,7 +297,8 @@ def playReversi():
         # Reset the board and game.
         mainBoard = getNewBoard()
         resetBoard(mainBoard)
-        playerTile, computerTile = enterPlayerTile()
+        playerTile = 'X'
+        computerTile = 'O'
         showHints = False
 
         # choose who goes first
@@ -328,10 +316,8 @@ def playReversi():
                 # display hints or not
                 if showHints:
                     validMovesBoard = getBoardWithValidMoves(mainBoard, playerTile)
-                    print('hints')
                     drawBoard(validMovesBoard)
                 else:
-                    print('no hints')
                     drawBoard(mainBoard)
 
                 showPoints(playerTile, computerTile, mainBoard)
