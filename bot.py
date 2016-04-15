@@ -15,7 +15,7 @@ with open('token.json') as api_key:
     token = api_key["token"]
 
 # create an instance of a slack client
-sc = SlackClient(token)  
+sc = SlackClient(token)
 
 # send a test messgae
 sc.api_call("api.test")
@@ -24,23 +24,21 @@ sc.api_call("channels.info", channel="1234567890")
 
 # draw new board and send
 def drawBoard(board):
-    boardString = "GAMEBOARD\n"
-    # This function prints out the board that it was passed. Returns None.
-    HLINE = '    ----------------------------------------------------\n'
-    VLINE = '    |       |       |       |       |       |       |       |     \
-      |\n'
+    boardString = "               GAMEBOARD\n"
+    # This function prints out the board that it was passed. Returns None
+    HLINE = '  +---+---+---+---+---+---+---+---+\n'
+    VLINE = '  |   |   |   |   |   |   |   |   |\n'
 
-    boardString += ('          1        2         3         4         5         6        7         8\n')
+    boardString += '    1   2   3   4   5   6   7   8\n'
     boardString += HLINE
     for y in range(8):
-        boardString += str(y+1)
+        boardString += (str(y+1) + ' ')
         for x in range(8):
-            boardString += '|   ' + str(board[x][y]) + '   '
+            boardString += '| ' + str(board[x][y]) + ' '
         boardString += '|\n' + HLINE
-
     # Send the board string.
     sc.api_call(
-        "chat.postMessage", channel="#general", text=boardString,
+        "chat.postMessage", channel="#general", text='```'+ boardString+'```',
         username='gamebot', icon_emoji=':robot_face:'
     )
 
@@ -72,7 +70,7 @@ def resetBoard(board):
     # Blanks out the board it is passed, except for the original starting position.
     for x in range(8):
         for y in range(8):
-            board[x][y] = '    '
+            board[x][y] = ' '
 
     # Starting pieces:
     board[3][3] = 'X'
@@ -85,7 +83,7 @@ def getNewBoard():
     # Creates a brand new, blank board data structure.
     board = []
     for i in range(8):
-        board.append(['    '] * 8)
+        board.append([' '] * 8)
 
     return board
 
@@ -93,7 +91,7 @@ def getNewBoard():
 def isValidMove(board, tile, xstart, ystart):
     # Returns False if the player's move on space xstart, ystart is invalid.
     # If it is a valid move, returns a list of spaces that would become the player's if they made a move here.
-    if board[xstart][ystart] != '    ':
+    if board[xstart][ystart] != ' ':
         return False
     elif not isOnBoard(xstart, ystart):
         return False
@@ -132,7 +130,7 @@ def isValidMove(board, tile, xstart, ystart):
                         break
                     tilesToFlip.append([x, y])
 
-    board[xstart][ystart] = '    '  # restore the empty space
+    board[xstart][ystart] = ' '  # restore the empty space
     if len(tilesToFlip) == 0:  # If no tiles were flipped, this is not a valid move.
         return False
     return tilesToFlip
@@ -371,7 +369,6 @@ def playReversi():
 
             # Computer's turn
             else:
-                
                 drawBoard(mainBoard)
                 showPoints(playerTile, computerTile, mainBoard)
                 x, y = getSmartComputerMove(mainBoard, computerTile, playerTile)
@@ -382,8 +379,6 @@ def playReversi():
                     break
                 else:
                     turn = 'player'
-
-        
 
         # Display the final scores
         drawBoard(mainBoard)
