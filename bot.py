@@ -44,6 +44,29 @@ def drawBoard(board):
         username='gamebot', icon_emoji=':robot_face:'
     )
 
+def getSmartComputerMove(board, computerTile, playerTile):
+    # Given a board and the computer's tile, determine where to
+    # move and return that move as a [x, y] list.
+    possibleMoves = getValidMoves(board, computerTile)
+    # randomize the order of the possible moves
+    random.shuffle(possibleMoves)
+    # always go for a corner if available.
+    for x, y in possibleMoves:
+        if isOnCorner(x, y):
+            return [x, y]
+    # Go through all the possible moves and remember the best scoring move
+    bestScore = -1
+    bestMove = [-1,-1]
+    for x, y in possibleMoves:
+        dupeBoard = getBoardCopy(board)
+        makeMove(dupeBoard, computerTile, x, y)
+        nextMove = getComputerMove(dupeBoard, playerTile)
+        makeMove(dupeBoard, playerTile, x, y)
+        score = getScoreOfBoard(dupeBoard)[computerTile]
+        if score > bestScore:
+            bestMove = [x, y]
+            bestScore = score
+    return bestMove
 
 def resetBoard(board):
     # Blanks out the board it is passed, except for the original starting position.
@@ -223,7 +246,6 @@ def getPlayerMove(board, playerTile):
 
         if move not in listOfMoves and len(move) <= 5:
             listOfMoves.append(move)
-            print ("move: " + move)
 
             if move == 'quit':
                 return 'quit'
@@ -313,6 +335,11 @@ def playReversi():
             # Player's turn
             if turn == 'player':
 
+                # drawBoard(mainBoard)
+                # showPoints(playerTile, computerTile, mainBoard)
+                # x, y = getComputerMove(mainBoard, playerTile)
+                # makeMove(mainBoard, playerTile, x, y)
+
                 # display hints or not
                 if showHints:
                     validMovesBoard = getBoardWithValidMoves(mainBoard, playerTile)
@@ -347,7 +374,7 @@ def playReversi():
                 
                 drawBoard(mainBoard)
                 showPoints(playerTile, computerTile, mainBoard)
-                x, y = getComputerMove(mainBoard, computerTile)
+                x, y = getSmartComputerMove(mainBoard, computerTile, playerTile)
                 makeMove(mainBoard, computerTile, x, y)
 
                 # end game or change to player's turn
@@ -375,7 +402,7 @@ def playReversi():
             )
         # Computer won
         elif scores[playerTile] < scores[computerTile]:
-            output = 'The computer beat you by ' + str(scores[computerTile] - scores[playerTile]) + ' points. :('
+            output = 'The computer beat you by ' + str(scores[computerTile] - scores[playerTile]) + ' points.'
             sc.api_call(
                 "chat.postMessage", channel="#general", text = output,
                 username='gamebot', icon_emoji=':robot_face:'
