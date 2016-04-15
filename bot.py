@@ -306,15 +306,15 @@ def showPoints(playerTile, computerTile, mainBoard):
 # PLAY GAME
 def playReversi():
     while True:
-        #outputString = ""
 
         # Reset the board and game.
         mainBoard = getNewBoard()
         resetBoard(mainBoard)
         playerTile, computerTile = enterPlayerTile()
         showHints = False
-        turn = whoGoesFirst()
 
+        # choose who goes first
+        turn = whoGoesFirst()
         output = 'The ' + turn + ' will go first.'
         sc.api_call(
             "chat.postMessage", channel="#general", text=output,
@@ -322,9 +322,10 @@ def playReversi():
         )
 
         while True:
+            # Player's turn
             if turn == 'player':
-                # Player's turn.
 
+                # display hints or not
                 if showHints:
                     validMovesBoard = getBoardWithValidMoves(mainBoard, playerTile)
                     print('hints')
@@ -334,48 +335,44 @@ def playReversi():
                     drawBoard(mainBoard)
 
                 showPoints(playerTile, computerTile, mainBoard)
+
+                # get player move
                 move = getPlayerMove(mainBoard, playerTile)
                 if move == 'quit':
                     sc.api_call(
                         "chat.postMessage", channel="#general", text = 'Thanks for playing!',
                         username='gamebot', icon_emoji=':robot_face:'
                     )
-                    sys.exit() # terminate the program
+                    sys.exit()
                 elif move == 'hints':
                     showHints = not showHints
                     continue
                 else:
-                    print("ENTERED ELSE LOOP FOR MAKEMOVE")
                     makeMove(mainBoard, playerTile, move[0], move[1])
 
+                # end game or change to computer's turn
                 if getValidMoves(mainBoard, computerTile) == []:
-                    print('player break')
                     break
                 else:
                     turn = 'computer'
 
+            # Computer's turn
             else:
-                # Computer's turn.
+                
                 drawBoard(mainBoard)
                 showPoints(playerTile, computerTile, mainBoard)
-                # sc.api_call(
-                #     "chat.postMessage", channel="#general", text = output,
-                #     username='gamebot', icon_emoji=':robot_face:'
-                # )
-                # sc.api_call(
-                #     "typing", channel="general", username = 'gamebot'
-                # )
-                #input('Press Enter to see the computer\'s move.')
                 x, y = getComputerMove(mainBoard, computerTile)
                 makeMove(mainBoard, computerTile, x, y)
 
+                # end game or change to player's turn
                 if getValidMoves(mainBoard, playerTile) == []:
-                    print('computer break')
                     break
                 else:
                     turn = 'player'
 
-        # Display the final score.
+        
+
+        # Display the final scores
         drawBoard(mainBoard)
         scores = getScoreOfBoard(mainBoard)
         output = 'X scored ' + str(scores['X']) + ' points. O scored ' + str(scores['O']) + ' points.'
@@ -383,18 +380,21 @@ def playReversi():
             "chat.postMessage", channel="#general", text = output,
             username='gamebot', icon_emoji=':robot_face:'
         )
+        # Player won 
         if scores[playerTile] > scores[computerTile]:
-            output = 'You beat the computer by ' + str(scores[playerTile] - scores[computerTile]) + 'points! Congratulations!'
+            output = 'You beat the computer by ' + str(scores[playerTile] - scores[computerTile]) + ' points! Congratulations!'
             sc.api_call(
                 "chat.postMessage", channel="#general", text = output,
                 username='gamebot', icon_emoji=':robot_face:'
             )
+        # Computer won
         elif scores[playerTile] < scores[computerTile]:
-            output = 'You beat the computer by ' + str(scores[computerTile] - scores[playerTile]) + 'points! Congratulations!'
+            output = 'The computer beat you by ' + str(scores[computerTile] - scores[playerTile]) + ' points. :('
             sc.api_call(
                 "chat.postMessage", channel="#general", text = output,
                 username='gamebot', icon_emoji=':robot_face:'
             )
+        # Tie
         else:
             sc.api_call(
                 "chat.postMessage", channel="#general", text = 'The game was a tie!',
@@ -408,9 +408,7 @@ def playReversi():
 def print_menu():
     '''print menu to channel'''
 
-    menu = "Hi and welcome to Slackbot Games! \n"
-    menu += "Pick the game you want to play: \n"
-    menu += "1. Reversi \n"
+    menu = "Hi and welcome to Slackbot Games! The first game is Reversi! \n"
 
     sc.api_call(
         "chat.postMessage", channel="#general", text = menu,
@@ -421,7 +419,7 @@ def print_menu():
 def main():
     # print the menu
     print_menu()
-
+    # play reversi
     playReversi()
 
 main()
