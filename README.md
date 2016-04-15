@@ -17,7 +17,7 @@ Navigate to folder.
 
 Create a file `token.json` and add `{"token":"YOUR_TOKEN"}`
 
-	touch token.json # creates token.json
+	touch token.json 
 
 Run the bot in your terminal with:
 	
