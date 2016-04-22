@@ -22,8 +22,8 @@ sc.api_call("api.test")
 sc.api_call("channels.info", channel="1234567890")
 
 
-# draw new board and send
-def drawBoard(board):
+# draw new written board and send
+def drawWrittenBoard(board):
     boardString = "               GAMEBOARD\n"
     # This function prints out the board that it was passed. Returns None
     HLINE = '  +---+---+---+---+---+---+---+---+\n'
@@ -39,6 +39,43 @@ def drawBoard(board):
     # Send the board string.
     sc.api_call(
         "chat.postMessage", channel="#general", text='```'+ boardString+'```',
+        username='gamebot', icon_emoji=':robot_face:'
+    )
+
+# draw new board and send
+def drawBoard(board):
+    boardString = "               GAMEBOARD\n"
+    # This function prints out the board that it was passed. Returns None
+
+    boardString += ':robot_face::one::two::three::four::five::six::seven::eight:\n'
+    for y in range(8):
+        if y == 0:
+            boardString += ":one:"
+        elif y == 1:
+            boardString += ":two:"
+        elif y == 2:
+            boardString += ":three:"
+        elif y == 3:
+            boardString += ":four:"
+        elif y == 4:
+            boardString += ":five:"
+        elif y == 5:
+            boardString += ":six:"
+        elif y == 6:
+            boardString += ":seven:"
+        elif y == 7:
+            boardString += ":eight:"
+        for x in range(8):
+            if board[x][y] == ' ':
+                boardString += ':' + 'white_square' + ':'
+            elif board[x][y] == '.':
+                boardString += ':' + 'wink' + ':'
+            else:
+                boardString += ':' + str(board[x][y]) + ':'
+        boardString += '\n'
+    # Send the board string.
+    sc.api_call(
+        "chat.postMessage", channel="#general", text=boardString,
         username='gamebot', icon_emoji=':robot_face:'
     )
 
@@ -235,8 +272,10 @@ def getPlayerMove(board, playerTile):
 
     # Returns the move as [x, y] (or returns the strings 'hints' or 'quit')
     DIGITS1TO8 = '1 2 3 4 5 6 7 8'.split()
+
+    validMove = False
     
-    while True:
+    while not validMove:
 
         # Get the player move from slack.
         data = json.loads(sc.api_call("channels.history", channel="C0N84ELPN", count=1))
@@ -248,26 +287,27 @@ def getPlayerMove(board, playerTile):
             if move == 'quit':
                 return 'quit'
             if move == 'hints':
+                listOfMoves.remove('hints')
                 return 'hints'
 
             if len(move) == 2 and move[0] in DIGITS1TO8 and move[1] in DIGITS1TO8:
-                x = int(move[0]) - 1
-                y = int(move[1]) - 1
+                y = int(move[0]) - 1
+                x = int(move[1]) - 1
                 if isValidMove(board, playerTile, x, y) == False:
-                    continue
+                    sc.api_call(
+                        "chat.postMessage", channel="#general",
+                        text='That is not a valid move. Type the x digit (1-8), then the y digit (1-8).',
+                        username='gamebot', icon_emoji=':robot_face:'
+                    )
+                    sc.api_call(
+                        "chat.postMessage", channel="#general",
+                        text='For example, 81 will be the bottom-right corner.',
+                        username='gamebot', icon_emoji=':robot_face:'
+                    )
+                    listOfMoves.remove(move)
                 else:
-                    break
-            else:
-                sc.api_call(
-                    "chat.postMessage", channel="#general",
-                    text='That is not a valid move. Type the x digit (1-8), then the y digit (1-8).',
-                    username='gamebot', icon_emoji=':robot_face:'
-                )
-                sc.api_call(
-                    "chat.postMessage", channel="#general",
-                    text='For example, 81 will be the top-right corner.',
-                    username='gamebot', icon_emoji=':robot_face:'
-                )
+                    validMove = True
+            
 
     return [x, y]
 
@@ -333,11 +373,6 @@ def playReversi():
             # Player's turn
             if turn == 'player':
 
-                # drawBoard(mainBoard)
-                # showPoints(playerTile, computerTile, mainBoard)
-                # x, y = getComputerMove(mainBoard, playerTile)
-                # makeMove(mainBoard, playerTile, x, y)
-
                 # display hints or not
                 if showHints:
                     validMovesBoard = getBoardWithValidMoves(mainBoard, playerTile)
@@ -371,7 +406,7 @@ def playReversi():
             else:
                 drawBoard(mainBoard)
                 showPoints(playerTile, computerTile, mainBoard)
-                x, y = getSmartComputerMove(mainBoard, computerTile, playerTile)
+                x, y = getComputerMove(mainBoard, computerTile)
                 makeMove(mainBoard, computerTile, x, y)
 
                 # end game or change to player's turn
@@ -417,6 +452,7 @@ def print_menu():
     '''print menu to channel'''
 
     menu = "Hi and welcome to Slackbot Games! The first game is Reversi! \n"
+    menu += "You are player X.\n"
 
     sc.api_call(
         "chat.postMessage", channel="#general", text = menu,
