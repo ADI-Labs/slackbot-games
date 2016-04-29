@@ -274,7 +274,7 @@ def getPlayerMove(board, playerTile):
     DIGITS1TO8 = '1 2 3 4 5 6 7 8'.split()
 
     validMove = False
-    
+
     while not validMove:
 
         # Get the player move from slack.

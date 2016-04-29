@@ -1,5 +1,6 @@
 :game_die: SlackBot :game_die:
 ====================
+###### *"b/c..games"*
 
 ## Usage
 ### Install 
