@@ -289,7 +289,12 @@ def getPlayerMove(board, playerTile):
             if move == 'hints':
                 listOfMoves.remove('hints')
                 return 'hints'
-
+            if len(move) != 2:
+                sc.api_call(
+                    "chat.postMessage", channel="#general",
+                    text='That is not a valid move. Type the x digit (1-8), then the y digit (1-8).',
+                    username='gamebot', icon_emoji=':robot_face:'
+                )
             if len(move) == 2 and move[0] in DIGITS1TO8 and move[1] in DIGITS1TO8:
                 y = int(move[0]) - 1
                 x = int(move[1]) - 1
@@ -452,7 +457,7 @@ def print_menu():
     '''print menu to channel'''
 
     menu = "Hi and welcome to Slackbot Games! The first game is Reversi! \n"
-    menu += "You are player X.\n"
+    menu += "You are player :x:\n"
 
     sc.api_call(
         "chat.postMessage", channel="#general", text = menu,
